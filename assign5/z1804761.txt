@@ -1,0 +1,173 @@
+#!/bin/bash
+#
+# Programmer: Cory Stojan
+# Assignmant: Assignment 5
+# Class: CSCI 330
+# Due Date: 10 APRIL18
+# Discription: Using a shell sctip to view, add, modify and delete a simple database of records.
+#		Parameters are in the order of 1) filename, 2) command executed, 3+) arguments of command
+#
+
+#save the filename for future use
+filename=$1
+
+#  commands (value of second parameter)
+case $2 in
+	# new command
+	#creates a new database with a specified name in $filename
+	new)
+
+	# check for existing file if it doesnt exit create one
+	if [ -e $filename ]; then
+		# report that file exist and exit
+		echo "Error $filename already exists"
+		exit 1
+
+	else
+		# create new file
+		touch $filename
+		# insert title in first line
+		title=$3
+		# if title is not given the Automobile Databas is given
+		if [ $title="" ]; then
+			title="Automobile Database"
+		fi
+		# display message for a sucess
+		echo "New database created"
+		
+		# insert title to file
+		echo $title >> $filename
+	fi
+	;;
+	
+	#add command 
+	# adds a new line with the make, modle, year, color
+	add)
+
+	# save each argument for the add command
+	make=$3
+	modle=$4
+	year=$5
+	#error check for year (less than 1870 and greater than 2020
+	if [[ "$year" -lt 1870 || "$year" -gt 2020 ]]; then
+		echo "Invalid Year Date"
+		exit 1
+	
+	fi
+	
+	# saves color	
+	color=$6
+	
+	#  insert variables into data file used a variable for conveinice
+	outputData=("$make" "$modle" "$year" "$color")
+	echo ${outputData[*]} >> $filename
+	echo "Sucessfully added a record to the database"
+	;;
+
+	# Show Command
+		# show all (displays the contents of the entire file)
+		# show single (#) shows a specified line in the file
+		# show range (#) (#) shows lines of a specified range
+	show)
+
+	#determine number of lines in file
+	line=($(wc -l $filename))
+	if [line = 1 ]; then
+		echo "No records found."
+		exit 1
+	fi
+
+	# show all
+	if [ $3 = "all" ]; then
+		# cat entire file
+		cat $filename
+	fi
+
+
+	# show single number
+	if [ $3 = "single" ]; then
+		# save line number for later use
+		number=$4
+		# print specific line
+		sed -n -e ${number}'p'  $filename
+	fi
+
+	# show range numbers-numbers
+	if [ $3 = "range" ]; then
+		#save range values for later use (minimum value) (Max value)
+		rangeMin=$4
+		rangeMax=$5
+		# print range of numbers
+		sed -n -e ${rangeMin},${rangeMax}'p' $filename
+	fi
+
+
+	;;
+
+	# delete command
+		# delete all delets all contents of the file except the title line
+		# delete single (#) deltes a single line in the file (cannot be title)
+		# delete range (#) (#) deletes range of number (Min value) (Max Value). 
+			#Cannot specifie title line as a value to be deleted)
+	delete)
+
+	# delete single number 
+	if [[ $3 = "single" && $3 != "" ]]; then 
+		
+		#save line number for use later
+		number=$4
+		#error checking
+		if [ $number = 1 ]; then
+			echo "Cannot delete title line"
+			exit 1
+		fi
+		#delete a specific lines
+		sed -i -e $number'd' $filename
+		# echo sucess statemnt
+		echo "Data '$number' was removed"
+
+	#delete range
+	elif [[ $3 = "range" && $3 != "" ]]; then
+
+		# save and set default values
+		rangeMin=$4 #Min Value
+		rangeMax=$5 #Max Value
+		count=0     #used to find position
+		# error checks (checks for title line and if the range is of a Min value followed by a Max value.
+		if [[ $rangeMin = 1 || $rangeMax = 1 || $rangeMax -lt $rangeMin ]]; then 
+			echo "Invalid range values"
+			exit 1
+		fi
+
+		# delete range values
+		sed -i -e "${rangeMin},${rangeMax}d" $filename
+		# counts how many files are included in the delete portion
+		count=$rangeMin-$rangeMax
+		
+		# echo a sucess statement
+		echo "'$count' Files removed"
+	#delete whole file
+	else
+		# find out how many lines are in the file
+		count=($(wc -l $filename))
+		
+		# error checks if only thing in the file is the title
+		if $count = 1; then
+			echo "cannot delte the title"
+
+		else
+
+		#delete all files except title
+		sed -i -e "2,${count}d" $filename
+		
+		# display how many files were deleted.
+		echo "$((count-1)) files deleted"
+
+		fi
+		
+
+	fi
+
+	;;
+	esac
+

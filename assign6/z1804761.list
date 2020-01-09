@@ -1,0 +1,62 @@
+#!bin/bash
+
+#
+# Programmer: Cory Stojan
+# Class/Assignment: CSCI330 Assignment 6
+# Due Date: April 18, 2018
+#
+
+#Print the headder of the report
+BEGIN {
+	
+	#change file seperator to :
+	FS = ":"
+	
+	#print headder
+	print "No-op Computing"
+	print "2013 Sales Associates Ranking"
+	print "Name                Position     Sales Amount"
+	print "============================================="
+	}
+
+#Invalid data (less than 3 fields)
+FF < 3 {
+	# do nothing
+}
+
+#Employee Info (3 fields)
+NF == 3 {
+	#store employee data and employee position into appropriate arrays using the id number as a arrays position refrence
+	# $1=employee id, $2=employee name, $3=employee position
+	employee[$1] = $2
+	position[$1] = $3
+}
+
+#Product Info
+NF == 4 {
+	#store product info into appropriate arrays using product id as a refrence to the arrays position
+	# $1=product id, $2=product category, $3=discription, $4=price
+	product[$1] = $4
+	productCategory[$1] = $2
+	productDiscripton[$1] = $3
+}
+
+#Transaction Info
+NF == 5 {
+	# add earning for year 2013
+	# $1= transaction id, $2= prodcut id, $3=order quantity, $4=transacton date, $5=employee id
+	#error check for years containing only the year 2013
+	if ($4 ~/2013/) {
+		# store earnings into an array. use array positon as a refrence to employee id.
+		earnings[$5] = product[$2] * $3
+	}
+}
+
+#Print data
+END {
+	# data is printed in the format of (Employee, Employee Position, Employee Earnings)
+	for (i in earnings) {
+		printf("%-19s %-12s %12.2f\n", employee[i], position[i], earnings[i]) | "sort -nr -k 4"
+	
+	}
+}
